@@ -1,0 +1,32 @@
+# 프로젝트 공통
+.env
+*.log
+
+# Java / Gradle (backend)
+backend/.gradle/
+backend/build/
+backend/bin/
+backend/out/
+backend/*.class
+backend/*.jar
+backend/*.war
+
+# Gradle Wrapper (jar은 커밋, 나머지 제외)
+!backend/gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Node.js / React (frontend)
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: chatterbook
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+bookprint:
+  api:
+    base-url: ${BOOKPRINT_API_BASE_URL:https://api-sandbox.sweetbook.com/v1}
+    key: ${BOOKPRINT_API_KEY:}
+
+logging:
+  level:
+    com.chatterbook: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
