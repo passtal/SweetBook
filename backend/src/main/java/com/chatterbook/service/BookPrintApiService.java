@@ -101,11 +101,20 @@ public class BookPrintApiService {
     }
 
     public JsonNode getBook(String bookUid) {
-        return webClient.get()
-                .uri("/books/{uid}", bookUid)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
+        // 외부 API가 GET /books/{uid} 단건 조회를 지원하지 않으므로 목록에서 필터링
+        JsonNode listResult = listBooks(null, 100, 0);
+        JsonNode books = listResult.path("data").path("books");
+        if (books.isArray()) {
+            for (JsonNode book : books) {
+                if (bookUid.equals(book.path("bookUid").asText())) {
+                    return objectMapper.createObjectNode()
+                            .put("success", true)
+                            .put("message", "성공")
+                            .set("data", book);
+                }
+            }
+        }
+        throw new RuntimeException("책을 찾을 수 없습니다: " + bookUid);
     }
 
     public JsonNode deleteBook(String bookUid) {

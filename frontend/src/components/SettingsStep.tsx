@@ -3,7 +3,7 @@ import {
   Box, Typography, Button, TextField, MenuItem,
   FormControl, InputLabel, Select, Alert,
 } from '@mui/material';
-import { getTemplates, getTemplate, createBook, createCover, addContent, finalizeBook } from '../services/api';
+import { getTemplates, getTemplate, getBookSpec, createBook, createCover, addContent, finalizeBook } from '../services/api';
 
 interface SettingsStepProps {
   parsedChat: any;
@@ -37,16 +37,46 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
   const [selectedCoverTemplate, setSelectedCoverTemplate] = useState('');
   const [selectedContentTemplate, setSelectedContentTemplate] = useState('');
   const [creating, setCreating] = useState(false);
+  const [specPageMin, setSpecPageMin] = useState(24);
+  const [specPageMax, setSpecPageMax] = useState(130);
+  const [specPageIncrement, setSpecPageIncrement] = useState(2);
+  const [pageWarning, setPageWarning] = useState<string | null>(null);
 
   useEffect(() => {
     loadTemplates(bookSpecUid);
+    loadBookSpec(bookSpecUid);
   }, []);
 
   useEffect(() => {
     if (bookSpecUid) {
       loadTemplates(bookSpecUid);
+      loadBookSpec(bookSpecUid);
     }
   }, [bookSpecUid]);
+
+  const loadBookSpec = async (specUid: string) => {
+    try {
+      const res = await getBookSpec(specUid);
+      const spec = res?.data || res;
+      const pMin = spec?.pageMin || 24;
+      const pMax = spec?.pageMax || 130;
+      const pInc = spec?.pageIncrement || 2;
+      setSpecPageMin(pMin);
+      setSpecPageMax(pMax);
+      setSpecPageIncrement(pInc);
+
+      // 메시지 수 기반 페이지 수 사전 체크
+      const totalMessages = parsedChat?.messages?.length || 0;
+      const rawPages = Math.ceil(totalMessages / 10);
+      if (rawPages < pMin) {
+        setPageWarning(`메시지가 적어 빈 페이지가 추가됩니다 (메시지 기반 ${rawPages}p → 최소 ${pMin}p). 정상적으로 생성 가능합니다.`);
+      } else {
+        setPageWarning(null);
+      }
+    } catch (err) {
+      console.error('판형 스펙 조회 실패:', err);
+    }
+  };
 
   const loadTemplates = async (specUid: string) => {
     try {
@@ -217,18 +247,20 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
         const contentDefs: Record<string, ParamDef> = contentTplData?.parameters?.definitions || {};
 
         const totalMessages = parsedChat.messages.length;
-        const minPages = 20;
-        const maxPages = 120;
 
         let messagesPerPage = 10;
         let rawPages = Math.ceil(totalMessages / messagesPerPage);
 
-        if (rawPages > maxPages) {
-          messagesPerPage = Math.ceil(totalMessages / maxPages);
+        if (rawPages > specPageMax) {
+          messagesPerPage = Math.ceil(totalMessages / specPageMax);
           rawPages = Math.ceil(totalMessages / messagesPerPage);
         }
 
-        const actualPages = Math.max(Math.min(rawPages, maxPages), minPages);
+        let actualPages = Math.max(Math.min(rawPages, specPageMax), specPageMin);
+        // pageIncrement 맞춤 (짝수 페이지 등)
+        if (specPageIncrement > 1) {
+          actualPages = Math.ceil(actualPages / specPageIncrement) * specPageIncrement;
+        }
 
         // 파일 필드가 필요한 경우 한 번만 플레이스홀더 생성
         const { fileFields } = mapParamsForTemplate(contentDefs, {
@@ -302,7 +334,7 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>책 설정</Typography>
+      <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#191F28', mb: 2.5 }}>책 설정</Typography>
 
       <TextField
         fullWidth
@@ -329,51 +361,114 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
       </FormControl>
 
       {coverTemplates.length > 0 && (
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>표지 템플릿</InputLabel>
-          <Select
-            value={selectedCoverTemplate}
-            label="표지 템플릿"
-            onChange={(e) => setSelectedCoverTemplate(e.target.value)}
-          >
-            {coverTemplates.map((t: any) => (
-              <MenuItem key={t.templateUid} value={t.templateUid}>
-                {t.templateName || t.templateUid}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Box sx={{ mb: 3 }}>
+          <FormControl fullWidth>
+            <InputLabel>표지 템플릿</InputLabel>
+            <Select
+              value={selectedCoverTemplate}
+              label="표지 템플릿"
+              onChange={(e) => setSelectedCoverTemplate(e.target.value)}
+            >
+              {coverTemplates.map((t: any) => (
+                <MenuItem key={t.templateUid} value={t.templateUid}>
+                  {t.theme || t.templateName || t.templateUid}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {(() => {
+            const selected = coverTemplates.find((t: any) => t.templateUid === selectedCoverTemplate);
+            if (!selected) return null;
+            return (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                {selected.thumbnails?.layout ? (
+                  <Box
+                    component="img"
+                    src={selected.thumbnails.layout}
+                    alt={selected.theme || selected.templateName}
+                    sx={{
+                      maxWidth: 280,
+                      width: '100%',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ maxWidth: 280, mx: 'auto', aspectRatio: '1', bgcolor: '#F9FAFB', borderRadius: '12px', border: '1px solid #F2F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography sx={{ color: '#B0B8C1' }}>미리보기 없음</Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+          })()}
+        </Box>
       )}
 
       {contentTemplates.length > 0 && (
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>내지 템플릿</InputLabel>
-          <Select
-            value={selectedContentTemplate}
-            label="내지 템플릿"
-            onChange={(e) => setSelectedContentTemplate(e.target.value)}
-          >
-            {contentTemplates.map((t: any) => (
-              <MenuItem key={t.templateUid} value={t.templateUid}>
-                {t.templateName || t.templateUid}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Box sx={{ mb: 3 }}>
+          <FormControl fullWidth>
+            <InputLabel>내지 템플릿</InputLabel>
+            <Select
+              value={selectedContentTemplate}
+              label="내지 템플릿"
+              onChange={(e) => setSelectedContentTemplate(e.target.value)}
+            >
+              {contentTemplates.map((t: any) => (
+                <MenuItem key={t.templateUid} value={t.templateUid}>
+                  {t.theme || t.templateName || t.templateUid}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {(() => {
+            const selected = contentTemplates.find((t: any) => t.templateUid === selectedContentTemplate);
+            if (!selected) return null;
+            return (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                {selected.thumbnails?.layout ? (
+                  <Box
+                    component="img"
+                    src={selected.thumbnails.layout}
+                    alt={selected.theme || selected.templateName}
+                    sx={{
+                      maxWidth: 280,
+                      width: '100%',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ maxWidth: 280, mx: 'auto', aspectRatio: '1', bgcolor: '#F9FAFB', borderRadius: '12px', border: '1px solid #F2F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Typography sx={{ color: '#B0B8C1' }}>미리보기 없음</Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+          })()}
+        </Box>
       )}
 
-      <Alert severity="info" sx={{ mb: 3 }}>
-        대화 {parsedChat?.totalMessages || 0}개 메시지가 책으로 변환됩니다.
-        참여자: {parsedChat?.participants?.join(', ') || '없음'}
-      </Alert>
+      {pageWarning && (
+        <Alert severity="warning" sx={{ mb: 2, borderRadius: '12px' }}>
+          {pageWarning}
+        </Alert>
+      )}
+
+      <Box sx={{ bgcolor: '#EBF4FF', borderRadius: '12px', p: 2, mb: 3 }}>
+        <Typography sx={{ color: '#3182F6', fontWeight: 600, fontSize: '0.9rem' }}>
+          대화 {parsedChat?.totalMessages || 0}개 메시지가 책으로 변환됩니다.
+          참여자: {parsedChat?.participants?.join(', ') || '없음'}
+        </Typography>
+      </Box>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button onClick={onBack} disabled={creating}>이전</Button>
+        <Button onClick={onBack} disabled={creating} sx={{ color: '#8B95A1', fontWeight: 600 }}>이전</Button>
         <Button
           variant="contained"
           size="large"
           onClick={handleCreate}
           disabled={creating}
+          sx={{ bgcolor: '#3182F6', fontWeight: 700, borderRadius: '12px', px: 5, '&:hover': { bgcolor: '#1B64DA' } }}
         >
           {creating ? '책 생성 중...' : '책 만들기'}
         </Button>

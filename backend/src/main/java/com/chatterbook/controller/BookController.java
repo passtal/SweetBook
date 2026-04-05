@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/books")
@@ -68,16 +70,15 @@ public class BookController {
             @PathVariable String bookUid,
             @RequestParam("templateUid") String templateUid,
             @RequestParam("parameters") String parametersJson,
-            @RequestParam(value = "coverPhoto", required = false) MultipartFile coverPhoto,
-            @RequestParam(value = "frontPhoto", required = false) MultipartFile frontPhoto,
-            @RequestParam(value = "backPhoto", required = false) MultipartFile backPhoto) throws IOException {
+            MultipartHttpServletRequest request) throws IOException {
 
         Map<String, Object> parameters = objectMapper.readValue(parametersJson, Map.class);
 
+        Set<String> excludeFields = Set.of("templateUid", "parameters");
         Map<String, MultipartFile> files = new java.util.HashMap<>();
-        if (coverPhoto != null) files.put("coverPhoto", coverPhoto);
-        if (frontPhoto != null) files.put("frontPhoto", frontPhoto);
-        if (backPhoto != null) files.put("backPhoto", backPhoto);
+        request.getFileMap().forEach((name, file) -> {
+            if (!excludeFields.contains(name)) files.put(name, file);
+        });
 
         if (!files.isEmpty()) {
             return ResponseEntity.ok(apiService.createCoverWithFiles(bookUid, templateUid, parameters, files));
@@ -94,14 +95,15 @@ public class BookController {
             @RequestParam("templateUid") String templateUid,
             @RequestParam("parameters") String parametersJson,
             @RequestParam(value = "breakBefore", defaultValue = "page") String breakBefore,
-            @RequestParam(value = "photo", required = false) MultipartFile photo,
-            @RequestParam(value = "photo1", required = false) MultipartFile photo1) throws IOException {
+            MultipartHttpServletRequest request) throws IOException {
 
         Map<String, Object> parameters = objectMapper.readValue(parametersJson, Map.class);
 
+        Set<String> excludeFields = Set.of("templateUid", "parameters", "breakBefore");
         Map<String, MultipartFile> files = new java.util.HashMap<>();
-        if (photo != null) files.put("photo", photo);
-        if (photo1 != null) files.put("photo1", photo1);
+        request.getFileMap().forEach((name, file) -> {
+            if (!excludeFields.contains(name)) files.put(name, file);
+        });
 
         if (!files.isEmpty()) {
             return ResponseEntity.ok(apiService.addContentWithFiles(bookUid, templateUid, parameters, breakBefore, files));

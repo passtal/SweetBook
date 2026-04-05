@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-  Box, Typography, Stepper, Step, StepLabel, Button, Card,
-  CardContent, Alert, CircularProgress,
+  Box, Typography, Stepper, Step, StepLabel,
+  Alert, CircularProgress,
 } from '@mui/material';
 import UploadStep from '../components/UploadStep';
 import PreviewStep from '../components/PreviewStep';
@@ -64,11 +64,29 @@ export default function CreatePage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        📖 대화를 책으로 만들기
+      <Typography
+        sx={{
+          fontWeight: 800,
+          fontSize: '1.6rem',
+          color: '#191F28',
+          letterSpacing: '-0.02em',
+          mb: 3,
+        }}
+      >
+        대화를 책으로 만들기
       </Typography>
 
-      <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+      <Stepper
+        activeStep={activeStep}
+        sx={{
+          mb: 4,
+          '& .MuiStepLabel-label': { fontWeight: 600, fontSize: '0.9rem' },
+          '& .MuiStepLabel-label.Mui-active': { color: '#3182F6' },
+          '& .MuiStepLabel-label.Mui-completed': { color: '#3CB371' },
+          '& .MuiStepIcon-root.Mui-active': { color: '#3182F6' },
+          '& .MuiStepIcon-root.Mui-completed': { color: '#3CB371' },
+        }}
+      >
         {steps.map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
@@ -77,23 +95,28 @@ export default function CreatePage() {
       </Stepper>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-          <CircularProgress />
+          <CircularProgress sx={{ color: '#3182F6' }} />
         </Box>
       )}
 
       {!loading && (
-        <Card elevation={0} sx={{ border: '1px solid #eee' }}>
-          <CardContent sx={{ p: 4 }}>
-            {renderStep()}
-          </CardContent>
-        </Card>
+        <Box
+          sx={{
+            p: { xs: 3, md: 4 },
+            borderRadius: '20px',
+            bgcolor: 'white',
+            border: '1px solid #F2F4F6',
+          }}
+        >
+          {renderStep()}
+        </Box>
       )}
     </Box>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box, Typography, Card, CardContent, Chip, Button,
+  Box, Typography, Chip, Button,
   CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions,
   Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
 } from '@mui/material';
@@ -14,6 +14,14 @@ const statusColorMap: Record<number, 'default' | 'info' | 'warning' | 'success' 
   40: 'success',    // 배송중
   50: 'success',    // 배송완료
   90: 'error',      // 취소
+};
+
+const formatOrderNumber = (order: any): string => {
+  const ref = order.externalRef || '';
+  if (/^\d{6}$/.test(ref)) return ref;
+  const digits = ref.replace(/\D/g, '');
+  if (digits.length >= 6) return digits.slice(-6);
+  return order.orderUid?.slice(-6) || ref;
 };
 
 export default function OrdersPage() {
@@ -76,38 +84,54 @@ export default function OrdersPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>📋 주문 내역</Typography>
+      <Typography sx={{ fontWeight: 800, fontSize: '1.6rem', color: '#191F28', letterSpacing: '-0.02em', mb: 3 }}>
+        주문 내역
+      </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       {orders.length === 0 ? (
-        <Card elevation={0} sx={{ border: '1px solid #eee', textAlign: 'center', py: 6 }}>
-          <CardContent>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              아직 주문 내역이 없습니다
-            </Typography>
-            <Typography color="text.secondary" sx={{ mb: 3 }}>
-              책을 만들고 주문해보세요!
-            </Typography>
-            <Button variant="contained" onClick={() => navigate('/create')}>
-              책 만들러 가기
-            </Button>
-          </CardContent>
-        </Card>
+        <Box
+          sx={{
+            textAlign: 'center',
+            p: 8,
+            borderRadius: '20px',
+            bgcolor: '#F9FAFB',
+            border: '1px solid #F2F4F6',
+          }}
+        >
+          <Typography sx={{ fontWeight: 600, color: '#4E5968', mb: 0.5 }}>
+            아직 주문 내역이 없습니다
+          </Typography>
+          <Typography sx={{ color: '#8B95A1', fontSize: '0.9rem', mb: 3 }}>
+            책을 만들고 주문해보세요!
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/create')}
+            sx={{ bgcolor: '#3182F6', fontWeight: 600, borderRadius: '12px', px: 4, '&:hover': { bgcolor: '#1B64DA' } }}
+          >
+            책 만들러 가기
+          </Button>
+        </Box>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #eee' }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ borderRadius: '16px', border: '1px solid #F2F4F6' }}
+        >
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>주문번호</TableCell>
-                <TableCell>주문일</TableCell>
-                <TableCell>상태</TableCell>
-                <TableCell align="right">결제 금액</TableCell>
-                <TableCell align="center">상세</TableCell>
+              <TableRow sx={{ bgcolor: '#F9FAFB' }}>
+                <TableCell sx={{ fontWeight: 700, color: '#4E5968', fontSize: '0.85rem' }}>주문번호</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#4E5968', fontSize: '0.85rem' }}>주문일</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#4E5968', fontSize: '0.85rem' }}>상태</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700, color: '#4E5968', fontSize: '0.85rem' }}>결제 금액</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#4E5968', fontSize: '0.85rem' }}>상세</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -115,30 +139,33 @@ export default function OrdersPage() {
                 const chipColor = statusColorMap[order.orderStatus] || 'default';
                 const chipLabel = order.orderStatusDisplay || `상태 ${order.orderStatus}`;
                 return (
-                  <TableRow key={order.orderUid} hover>
+                  <TableRow key={order.orderUid} hover sx={{ '&:hover': { bgcolor: '#FAFBFC' } }}>
                     <TableCell>
-                      <Typography variant="body2" fontWeight={600}>
-                        {order.orderUid?.slice(0, 12)}...
+                      <Typography sx={{ fontWeight: 600, color: '#191F28', fontSize: '0.9rem' }}>
+                        {formatOrderNumber(order)}
                       </Typography>
-                      {order.externalRef && (
-                        <Typography variant="caption" color="text.secondary">
-                          {order.externalRef}
-                        </Typography>
-                      )}
                     </TableCell>
                     <TableCell>
-                      {order.orderedAt
-                        ? new Date(order.orderedAt).toLocaleDateString('ko-KR')
-                        : '-'}
+                      <Typography sx={{ color: '#8B95A1', fontSize: '0.85rem' }}>
+                        {order.orderedAt
+                          ? new Date(order.orderedAt).toLocaleDateString('ko-KR')
+                          : '-'}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <Chip label={chipLabel} color={chipColor} size="small" />
                     </TableCell>
                     <TableCell align="right">
-                      {order.paidCreditAmount?.toLocaleString()}원
+                      <Typography sx={{ fontWeight: 600, color: '#191F28', fontSize: '0.9rem' }}>
+                        {order.paidCreditAmount?.toLocaleString()}원
+                      </Typography>
                     </TableCell>
                     <TableCell align="center">
-                      <Button size="small" onClick={() => handleDetail(order.orderUid)}>
+                      <Button
+                        size="small"
+                        onClick={() => handleDetail(order.orderUid)}
+                        sx={{ color: '#3182F6', fontWeight: 600, borderRadius: '8px' }}
+                      >
                         보기
                       </Button>
                     </TableCell>
@@ -154,36 +181,36 @@ export default function OrdersPage() {
       <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} maxWidth="sm" fullWidth>
         {selectedOrder && (
           <>
-            <DialogTitle>주문 상세</DialogTitle>
-            <DialogContent dividers>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">주문번호</Typography>
-                <Typography fontWeight={600}>{selectedOrder.orderUid}</Typography>
+            <DialogTitle sx={{ fontWeight: 700, color: '#191F28' }}>주문 상세</DialogTitle>
+            <DialogContent dividers sx={{ borderColor: '#F2F4F6' }}>
+              <Box sx={{ mb: 2.5 }}>
+                <Typography sx={{ fontSize: '0.8rem', color: '#8B95A1', mb: 0.3 }}>주문번호</Typography>
+                <Typography sx={{ fontWeight: 600, color: '#191F28' }}>{formatOrderNumber(selectedOrder)}</Typography>
               </Box>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">주문 상태</Typography>
+              <Box sx={{ mb: 2.5 }}>
+                <Typography sx={{ fontSize: '0.8rem', color: '#8B95A1', mb: 0.3 }}>주문 상태</Typography>
                 <Chip
                   label={selectedOrder.orderStatusDisplay || `상태 ${selectedOrder.orderStatus}`}
                   color={statusColorMap[selectedOrder.orderStatus] || 'default'}
                   size="small"
                 />
               </Box>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary">결제 금액</Typography>
-                <Typography>{selectedOrder.paidCreditAmount?.toLocaleString()}원</Typography>
+              <Box sx={{ mb: 2.5 }}>
+                <Typography sx={{ fontSize: '0.8rem', color: '#8B95A1', mb: 0.3 }}>결제 금액</Typography>
+                <Typography sx={{ fontWeight: 600, color: '#191F28' }}>{selectedOrder.paidCreditAmount?.toLocaleString()}원</Typography>
               </Box>
 
               {selectedOrder.shippingInfo && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>배송 정보</Typography>
-                  <Typography variant="body2">
+                <Box sx={{ mb: 2.5, p: 2, bgcolor: '#F9FAFB', borderRadius: '12px' }}>
+                  <Typography sx={{ fontSize: '0.8rem', color: '#8B95A1', mb: 1 }}>배송 정보</Typography>
+                  <Typography sx={{ fontSize: '0.9rem', color: '#333D4B' }}>
                     {selectedOrder.shippingInfo.recipientName} ({selectedOrder.shippingInfo.recipientPhone})
                   </Typography>
-                  <Typography variant="body2">
+                  <Typography sx={{ fontSize: '0.9rem', color: '#333D4B' }}>
                     [{selectedOrder.shippingInfo.postalCode}] {selectedOrder.shippingInfo.address1} {selectedOrder.shippingInfo.address2}
                   </Typography>
                   {selectedOrder.shippingInfo.memo && (
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography sx={{ fontSize: '0.85rem', color: '#8B95A1', mt: 0.5 }}>
                       메모: {selectedOrder.shippingInfo.memo}
                     </Typography>
                   )}
@@ -191,31 +218,36 @@ export default function OrdersPage() {
               )}
 
               {selectedOrder.trackingNumber && (
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">운송장번호</Typography>
-                  <Typography>{selectedOrder.trackingNumber}</Typography>
+                <Box sx={{ mb: 2.5 }}>
+                  <Typography sx={{ fontSize: '0.8rem', color: '#8B95A1', mb: 0.3 }}>운송장번호</Typography>
+                  <Typography sx={{ fontWeight: 600, color: '#191F28' }}>{selectedOrder.trackingNumber}</Typography>
                 </Box>
               )}
 
               {selectedOrder.items?.map((item: any, idx: number) => (
                 <Box key={idx} sx={{ mb: 1 }}>
-                  <Typography variant="body2">
+                  <Typography sx={{ fontSize: '0.9rem', color: '#4E5968' }}>
                     📖 {item.bookTitle || item.bookUid} × {item.quantity}부
                   </Typography>
                 </Box>
               ))}
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ px: 3, py: 2 }}>
               {selectedOrder.status === 'payment_confirmed' && (
                 <Button
-                  color="error"
                   onClick={() => handleCancel(selectedOrder.orderUid)}
                   disabled={cancelling}
+                  sx={{ color: '#E8344E', fontWeight: 600 }}
                 >
                   {cancelling ? '취소 중...' : '주문 취소'}
                 </Button>
               )}
-              <Button onClick={() => setDetailOpen(false)}>닫기</Button>
+              <Button
+                onClick={() => setDetailOpen(false)}
+                sx={{ color: '#8B95A1', fontWeight: 600 }}
+              >
+                닫기
+              </Button>
             </DialogActions>
           </>
         )}

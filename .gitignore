@@ -1,6 +1,7 @@
 # 프로젝트 공통
 .env
 *.log
+interview-prep.md
 
 # Java / Gradle (backend)
 backend/.gradle/
@@ -11,7 +12,7 @@ backend/*.class
 backend/*.jar
 backend/*.war
 
-# Gradle Wrapper (jar은 커밋, 나머지 제외)
+# Gradle Wrapper
 !backend/gradle/wrapper/gradle-wrapper.jar
 
 # IDE
