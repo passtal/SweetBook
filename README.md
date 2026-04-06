@@ -8,6 +8,12 @@
 
 **채터북**은 카카오톡 대화 내보내기 파일(.txt)을 업로드하면, 대화 내용을 자동 파싱하여 Book Print API를 통해 실물 책으로 제작·주문할 수 있는 서비스입니다.
 
+### 시연 영상
+
+[![채터북 시연 영상](https://img.youtube.com/vi/J6GYdmia4_o/maxresdefault.jpg)](https://youtu.be/J6GYdmia4_o)
+
+▶ [YouTube에서 보기](https://youtu.be/J6GYdmia4_o)
+
 ### 타겟 고객
 - 연인·친구·가족 간의 소중한 대화를 물리적 기념품으로 간직하고 싶은 **20~30대 MZ세대**
 - 졸업, 기념일, 생일 등 **특별한 날에 감성적인 선물**을 찾는 사람
