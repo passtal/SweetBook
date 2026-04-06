@@ -94,9 +94,24 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
       const contentArr = Array.isArray(contents) ? contents : [];
       setContentTemplates(contentArr);
 
-      // 알림장B 테마 우선 선택 (사진 불필요), 없으면 첫 번째
-      const preferredContent = contentArr.find((t: any) => t.theme === '알림장B') || contentArr[0];
-      setSelectedContentTemplate(preferredContent?.templateUid || '');
+      // 일기장B 테마 중 diaryText 있고 사진 불필요한 템플릿 우선 선택
+      let bestContent: any = null;
+      const diaryBTemplates = contentArr.filter((t: any) => t.theme === '일기장B');
+      for (const tpl of diaryBTemplates) {
+        try {
+          const detail = await getTemplate(tpl.templateUid);
+          const defs = detail?.data?.parameters?.definitions || {};
+          const hasDiaryText = Object.keys(defs).some((k: string) => k.toLowerCase().includes('diarytext'));
+          const hasRequiredFile = Object.values(defs).some((d: any) =>
+            (d.binding === 'file' || d.binding === 'collageGallery') && d.required);
+          if (hasDiaryText && !hasRequiredFile) {
+            bestContent = tpl;
+            break;
+          }
+        } catch { /* skip */ }
+      }
+      setSelectedContentTemplate(bestContent?.templateUid || contentArr[0]?.templateUid || '');
+      console.log('[DEBUG] 선택된 내지 템플릿:', bestContent?.templateUid, bestContent?.theme);
     } catch (err) {
       console.error('템플릿 조회 실패:', err);
     }
@@ -151,14 +166,25 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
 
       // 텍스트 파라미터 스마트 매핑
       const nameLower = name.toLowerCase();
-      if (nameLower.includes('diarytext') || nameLower.includes('comment') || nameLower.includes('contents')) {
+      if (nameLower.includes('diarytext') || nameLower.includes('contents')) {
         params[name] = context.chatText;
-      } else if (nameLower === 'title' || nameLower === 'booktitle' || nameLower === 'spinetitle') {
+      } else if (nameLower === 'parentcomment' || nameLower === 'teachercomment') {
+        // 알림장 계열: 코멘트 필드에 대화 내용 매핑
+        params[name] = context.chatText;
+      } else if (nameLower === 'hasparentcomment' || nameLower === 'hasteachercomment') {
+        params[name] = context.chatText ? 'true' : 'false';
+      } else if (nameLower === 'booktitle' || nameLower === 'spinetitle') {
         params[name] = title;
+      } else if (nameLower === 'title') {
+        // 내지 페이지 소제목: 날짜 기반
+        params[name] = context.dateStr
+          ? `${context.monthNum}월 ${context.dayNum}일의 대화`
+          : `대화 ${context.pageIndex + 1}`;
       } else if (nameLower === 'daterange') {
         params[name] = context.dateStr || '2026.01 - 2026.12';
       } else if (nameLower === 'date') {
-        params[name] = context.dateStr || `${context.monthNum}월 ${context.dayNum}일`;
+        // 일기장B 형식: "1.16"
+        params[name] = `${parseInt(context.monthNum, 10)}.${parseInt(context.dayNum, 10)}`;
       } else if (nameLower === 'monthnum' || nameLower === 'month') {
         params[name] = context.monthNum;
       } else if (nameLower === 'daynum') {
@@ -300,6 +326,13 @@ export default function SettingsStep({ parsedChat, onCreated, onBack, setError, 
           const { params } = mapParamsForTemplate(contentDefs, {
             chatText, dateStr, monthNum, dayNum, year, pageIndex: i,
           });
+
+          if (i === 0) {
+            console.log('[DEBUG] 내지 템플릿 UID:', selectedContentTemplate);
+            console.log('[DEBUG] contentDefs keys:', Object.keys(contentDefs));
+            console.log('[DEBUG] page 0 chatText (first 200):', chatText.substring(0, 200));
+            console.log('[DEBUG] page 0 params:', JSON.stringify(params));
+          }
 
           // 파일 파라미터 구성
           const files: Record<string, File> = {};

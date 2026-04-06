@@ -5,6 +5,7 @@ import {
   Chip, Grid, CircularProgress, Alert,
 } from '@mui/material';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import { listBooks, deleteBook } from '../services/api';
 
 const STATUS_MAP: Record<string, { label: string; color: 'default' | 'warning' | 'success' | 'error' }> = {
@@ -135,13 +136,23 @@ export default function BooksPage() {
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1 }}>
                     {book.status === 'finalized' && (
-                      <Button
-                        size="small"
-                        onClick={() => navigate(`/order/${book.bookUid}`)}
-                        sx={{ bgcolor: '#EBF4FF', color: '#3182F6', fontWeight: 600, borderRadius: '10px', '&:hover': { bgcolor: '#D6E8FF' } }}
-                      >
-                        주문하기
-                      </Button>
+                      <>
+                        <Button
+                          size="small"
+                          startIcon={<VisibilityIcon sx={{ fontSize: 16 }} />}
+                          onClick={() => navigate(`/books/${book.bookUid}/preview`)}
+                          sx={{ bgcolor: '#F2F4F6', color: '#4E5968', fontWeight: 600, borderRadius: '10px', '&:hover': { bgcolor: '#E5E8EB' } }}
+                        >
+                          미리보기
+                        </Button>
+                        <Button
+                          size="small"
+                          onClick={() => navigate(`/order/${book.bookUid}`)}
+                          sx={{ bgcolor: '#EBF4FF', color: '#3182F6', fontWeight: 600, borderRadius: '10px', '&:hover': { bgcolor: '#D6E8FF' } }}
+                        >
+                          주문하기
+                        </Button>
+                      </>
                     )}
                     {book.status === 'draft' && (
                       <Button

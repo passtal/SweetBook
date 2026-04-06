@@ -179,4 +179,15 @@ export const getCredits = async () => {
   return data;
 };
 
+// ==================== Render (Thumbnail) ====================
+
+export const renderPageThumbnail = async (bookUid: string, pageNum: number) => {
+  const { data } = await api.post('/render/page-thumbnail', { bookUid, pageNum });
+  return data;
+};
+
+export const getThumbnailUrl = (bookUid: string, fileName: string) => {
+  return `/api/render/thumbnail/${bookUid}/${fileName}?t=${Date.now()}`;
+};
+
 export default api;

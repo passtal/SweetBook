@@ -47,8 +47,15 @@ export default function CompleteStep({ createdBook }: CompleteStepProps) {
         <Button
           variant="contained"
           size="large"
-          onClick={() => navigate(`/order/${createdBook?.bookUid}`)}
+          onClick={() => navigate(`/books/${createdBook?.bookUid}/preview`)}
           sx={{ bgcolor: '#3182F6', fontWeight: 600, borderRadius: '12px', px: 4, '&:hover': { bgcolor: '#1B64DA' } }}
+        >
+          미리보기
+        </Button>
+        <Button
+          size="large"
+          onClick={() => navigate(`/order/${createdBook?.bookUid}`)}
+          sx={{ color: '#3182F6', fontWeight: 600, borderRadius: '12px', border: '1px solid #3182F6', px: 4, '&:hover': { bgcolor: '#EBF4FF' } }}
         >
           주문하기
         </Button>

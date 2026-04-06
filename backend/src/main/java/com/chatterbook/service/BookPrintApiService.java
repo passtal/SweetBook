@@ -101,18 +101,22 @@ public class BookPrintApiService {
     }
 
     public JsonNode getBook(String bookUid) {
-        // 외부 API가 GET /books/{uid} 단건 조회를 지원하지 않으므로 목록에서 필터링
-        JsonNode listResult = listBooks(null, 100, 0);
-        JsonNode books = listResult.path("data").path("books");
-        if (books.isArray()) {
-            for (JsonNode book : books) {
-                if (bookUid.equals(book.path("bookUid").asText())) {
-                    return objectMapper.createObjectNode()
-                            .put("success", true)
-                            .put("message", "성공")
-                            .set("data", book);
-                }
-            }
+        JsonNode result = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/books")
+                        .queryParam("bookUid", bookUid)
+                        .build())
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+
+        // API가 목록 형태(data.books[])로 반환하므로 첫 번째 요소를 단건으로 변환
+        JsonNode books = result.path("data").path("books");
+        if (books.isArray() && !books.isEmpty()) {
+            return objectMapper.createObjectNode()
+                    .put("success", true)
+                    .put("message", "성공")
+                    .set("data", books.get(0));
         }
         throw new RuntimeException("책을 찾을 수 없습니다: " + bookUid);
     }
@@ -363,6 +367,31 @@ public class BookPrintApiService {
                         .build())
                 .retrieve()
                 .bodyToMono(JsonNode.class)
+                .block();
+    }
+
+    // ==================== Render (Thumbnail) ====================
+
+    public JsonNode renderPageThumbnail(String bookUid, int pageNum) {
+        Map<String, Object> body = Map.of(
+                "bookUid", bookUid,
+                "pageNum", pageNum
+        );
+        return webClient.post()
+                .uri("/render/page-thumbnail")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+    }
+
+    public byte[] getThumbnailImage(String bookUid, String fileName) {
+        return webClient.get()
+                .uri("/render/thumbnail/{bookUid}/{fileName}", bookUid, fileName)
+                .accept(MediaType.IMAGE_JPEG)
+                .retrieve()
+                .bodyToMono(byte[].class)
                 .block();
     }
 }

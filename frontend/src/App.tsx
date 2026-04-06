@@ -7,6 +7,7 @@ import CreatePage from './pages/CreatePage';
 import BooksPage from './pages/BooksPage';
 import OrderPage from './pages/OrderPage';
 import OrdersPage from './pages/OrdersPage';
+import BookPreviewPage from './pages/BookPreviewPage';
 
 const theme = createTheme({
   palette: {
@@ -141,6 +142,7 @@ function App() {
             <Route path="/books" element={<BooksPage />} />
             <Route path="/order/:bookUid" element={<OrderPage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/books/:bookUid/preview" element={<BookPreviewPage />} />
           </Routes>
         </Layout>
       </BrowserRouter>
