@@ -12,7 +12,7 @@
 
 [![채터북 시연 영상](https://img.youtube.com/vi/J6GYdmia4_o/maxresdefault.jpg)](https://youtu.be/J6GYdmia4_o)
 
-▶ [YouTube에서 보기](https://youtu.be/J6GYdmia4_o)
+▶ <a href="https://youtu.be/J6GYdmia4_o" target="_blank">YouTube에서 보기</a>
 
 ### 타겟 고객
 - 연인·친구·가족 간의 소중한 대화를 물리적 기념품으로 간직하고 싶은 **20~30대 MZ세대**
